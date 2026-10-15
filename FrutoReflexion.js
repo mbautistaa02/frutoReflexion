@@ -37,13 +37,22 @@ let puntos = 0;
 let mensaje = "";
 let mensajeHasta = 0;
 let mensajePanel = "";
+let moving, openAu, closeAu, caveAu;
+let openImg, closeImg, bgImg;
 
-
+function preload() {
+  moving = loadSound("moving.mp3");
+  openAu = loadSound("open.mp3");
+  closeAu = loadSound("close.mp3");
+  caveAu = loadSound("cave.mp3");
+  openImg = loadImage('open.png');
+  closeImg = loadImage('closed.png');
+ bgImg = loadImage('bg.png');
+}
 // ============================================================
 function setup() {
   createCanvas(900, 650);
   pixelDensity(1);            // importante: así los índices de píxeles coinciden
-  textFont("Arial");
   crearBancoDePreguntas();
   reiniciar();
 }
@@ -67,13 +76,18 @@ function reiniciar() {
 
 // ============================================================
 function draw() {
-  dibujarSuelo();
+
+  image(bgImg, 0, 0, width, height);
+
 
   // Los cofres se dibujan ANTES de la niebla: solo se ven si ya iluminaste esa zona
   for (const c of cofres) c.dibujar();
 
   if (estado === JUGANDO) {
     moverJugador();
+    // userStartAudio();
+    // caveAu.loop();
+    // caveAu.setVolume(0.1);
   }
   actualizarNiebla();
   image(niebla, 0, 0);
@@ -159,30 +173,22 @@ class Cofre {
   constructor(x, y, pregunta) {
     this.x = x;
     this.y = y;
-    this.tam = 34;
+    this.tam = 70;
     this.abierto = false;
     this.pregunta = pregunta;
   }
 
-  dibujar() {
-    rectMode(CENTER);
-    stroke(30, 20, 10);
-    strokeWeight(2);
-    if (this.abierto) {
-      fill(90, 140, 70);             // verde = ya resuelto
-      rect(this.x, this.y, this.tam, this.tam);
-      fill(255, 230, 100);
-      noStroke();
-      ellipse(this.x, this.y, 10, 10); // "tesoro"
-    } else {
-      fill(150, 90, 40);             // marrón = cerrado
-      rect(this.x, this.y, this.tam, this.tam);
-      fill(240, 200, 50);
-      noStroke();
-      rect(this.x, this.y, 8, 10);   // cerradura
-    }
-    rectMode(CORNER);
+dibujar() {
+  imageMode(CENTER);
+
+  if (this.abierto) {
+    image(openImg, this.x, this.y, this.tam, this.tam);
+  } else {
+    image(closeImg, this.x, this.y, this.tam, this.tam);
   }
+
+  imageMode(CORNER);
+}
 
   estaCerca() {
     return dist(px, py, this.x, this.y) < 50;
@@ -223,26 +229,66 @@ function cofreCercano() {
 function crearBancoDePreguntas() {
   // { texto, opciones, correcta }  -> correcta es el índice (0-3)
   banco = [
-    { texto: "¿Cuál es la capital de Colombia?",
-      opciones: ["Medellín", "Bogotá", "Cali", "Cartagena"], correcta: 1 },
-    { texto: "¿Cuánto es 7 x 8?",
-      opciones: ["54", "56", "58", "64"], correcta: 1 },
-    { texto: "¿Qué planeta es el más grande del sistema solar?",
-      opciones: ["Saturno", "Marte", "Júpiter", "Neptuno"], correcta: 2 },
-    { texto: "¿Cuántos lados tiene un hexágono?",
-      opciones: ["5", "6", "7", "8"], correcta: 1 },
-    { texto: "¿Quién escribió \"Cien años de soledad\"?",
-      opciones: ["Pablo Neruda", "Julio Cortázar", "Gabriel García Márquez", "Mario Vargas Llosa"], correcta: 2 },
-    { texto: "¿Cuál es el símbolo químico del agua?",
-      opciones: ["H2O", "CO2", "O2", "NaCl"], correcta: 0 },
-    { texto: "¿Qué lenguaje se ejecuta nativamente en los navegadores web?",
-      opciones: ["Python", "C#", "JavaScript", "Ruby"], correcta: 2 },
-    { texto: "¿Cuántos continentes hay?",
-      opciones: ["5", "6", "7", "8"], correcta: 2 },
-    { texto: "¿Cuál es el océano más grande?",
-      opciones: ["Atlántico", "Índico", "Ártico", "Pacífico"], correcta: 3 },
-    { texto: "¿Cuál es la raíz cuadrada de 144?",
-      opciones: ["10", "11", "12", "14"], correcta: 2 },
+    {
+      texto: "¿Qué significa el acrónimo ARTE en el acompañamiento entre pares?",
+      opciones: [
+        "Aprendizaje, Responsabilidad, Trabajo y Enseñanza",
+        "Autonomía, Respeto, Teoría y Evaluación",
+        "Acción, Reflexión, Trabajo colaborativo y Error como oportunidad",
+        "Acción, Resolución, Técnica y Experiencia"
+      ],
+      correcta: 2
+    },
+    {
+      texto: "¿Cuál es el propósito principal de una tutoría entre pares?",
+      opciones: [
+        "Resolver todas las actividades del tutorado",
+        "Acompañar el aprendizaje y fomentar la autonomía",
+        "Explicar todos los temas sin interrupciones",
+        "Evaluar los conocimientos del tutorado"
+      ],
+      correcta: 1
+    },
+    {
+      texto: "¿Para qué sirve realizar recapitulaciones durante una tutoría?",
+      opciones: [
+        "Repetir toda la explicación desde el principio",
+        "Verificar la comprensión y relacionar los conceptos trabajados",
+        "Evitar que los tutorados hagan preguntas",
+        "Terminar la tutoría más rápido"
+      ],
+      correcta: 1
+    },
+    {
+      texto: "¿Cuáles son las cuatro variables del aprendizaje relacionadas con la metacognición?",
+      opciones: [
+        "Persona, tarea, estrategia y contexto",
+        "Memoria, atención, motivación y evaluación",
+        "Planificación, ejecución, revisión y calificación",
+        "Tutor, tutorado, docente y contenido"
+      ],
+      correcta: 0
+    },
+    {
+      texto: "¿Cómo se evidencia la reflexión durante una tutoría?",
+      opciones: [
+        "Cuando el tutor explica todo el procedimiento",
+        "Cuando el estudiante memoriza los pasos",
+        "Cuando se termina la actividad lo más rápido posible",
+        "Cuando el estudiante analiza lo que hizo y comprende por qué funciona"
+      ],
+      correcta: 3
+    },
+    {
+      texto: "¿Cuál de las siguientes acciones refleja mejor el papel de un par tutor?",
+      opciones: [
+        "Dar las respuestas para ahorrar tiempo",
+        "Controlar cada paso del estudiante",
+        "Acompañar, orientar y promover la autonomía del tutorado",
+        "Evaluar al estudiante como lo haría un profesor"
+      ],
+      correcta: 2
+    },
   ];
 }
 
@@ -290,6 +336,7 @@ function dibujarHUD() {
   }
 
   if (estado === JUGANDO) {
+
     const c = cofreCercano();
     if (c) {
       textAlign(CENTER, BOTTOM);
@@ -309,7 +356,7 @@ function dibujarPanelPregunta() {
   rect(0, 0, width, height);
 
   // Panel
-  const w = 560, h = 330;
+  const w = 700, h = 330;
   const x = width / 2 - w / 2;
   const y = height / 2 - h / 2;
   fill(30, 30, 50);
@@ -360,12 +407,24 @@ function dibujarVictoria() {
 // ============================================================
 function keyPressed() {
   const k = key.toLowerCase();
-
+  moving.setVolume(0.3);
   // Movimiento
   if (k === "w" || keyCode === UP_ARROW)    arriba = true;
   if (k === "s" || keyCode === DOWN_ARROW)  abajo = true;
   if (k === "a" || keyCode === LEFT_ARROW)  izq = true;
   if (k === "d" || keyCode === RIGHT_ARROW) der = true;
+  
+  if (arriba || abajo || izq || der) {
+    if (estado === JUGANDO) {
+      userStartAudio();
+      if (!moving.isPlaying()) 
+      moving.loop();
+      moving.setVolume(0.15);
+      if (!caveAu.isPlaying()) 
+      caveAu.loop();
+      caveAu.setVolume(0.2);
+    }
+  }
 
   if (estado === JUGANDO) {
     if (k === "e") {
@@ -373,6 +432,9 @@ function keyPressed() {
       if (c) {
         cofreActual = c;
         mensajePanel = "";
+        userStartAudio();
+        openAu.setVolume(0.3);
+        openAu.play();
         estado = PREGUNTANDO;
       }
     }
@@ -380,9 +442,15 @@ function keyPressed() {
     const n = parseInt(key) - 1;   // '1' -> 0, '2' -> 1, ...
     if (n >= 0 && n < cofreActual.pregunta.opciones.length) {
       responder(n);
+      userStartAudio();
+      closeAu.setVolume(0.3);
+      closeAu.play();
     }
     if (k === "q") {
       estado = JUGANDO;
+      userStartAudio();
+        openAu.setVolume(0.3);
+        openAu.play();
       cofreActual = null;
     }
   } else if (estado === GANADO) {
@@ -394,9 +462,14 @@ function keyPressed() {
 }
 
 function keyReleased() {
+
   const k = key.toLowerCase();
   if (k === "w" || keyCode === UP_ARROW)    arriba = false;
   if (k === "s" || keyCode === DOWN_ARROW)  abajo = false;
   if (k === "a" || keyCode === LEFT_ARROW)  izq = false;
   if (k === "d" || keyCode === RIGHT_ARROW) der = false;
+  
+  if (!arriba && !abajo && !izq && !der) {
+    moving.setVolume(0);
+  }
 }
